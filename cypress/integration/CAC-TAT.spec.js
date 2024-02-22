@@ -189,7 +189,7 @@ describe('Central de Atendimento ao Cliente TAT', function () {
            .should('have.value', longText)
       })
 
-      it.only('Faz Requisição HTTP', function(){
+      it('Faz Requisição HTTP', function(){
         cy.request('https://cac-tat.s3.eu-central-1.amazonaws.com/index.html')
           .should(function(response){
             console.log(response)
