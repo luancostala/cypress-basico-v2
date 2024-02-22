@@ -1,6 +1,7 @@
 /// <reference types="Cypress" />
 
 describe('Central de Atendimento ao Cliente TAT', function () {
+    const THREE_SECONDS_IN_MS = 3000
 
     beforeEach(() => {
         cy.visit('src/index.html')
@@ -13,6 +14,8 @@ describe('Central de Atendimento ao Cliente TAT', function () {
     it('preenche os campos obrigatórios e envia o formulário', function () {
         const longText = 'Esse texto foi escrito por uma automação de testes, o intuito é usá-la como experimento de longo texto que será escrito de forma quase que imadiata, a ideia é ter um delay igual a 0'
 
+        cy.clock()
+
         cy.get('#firstName').type('Luãn')
         cy.get('#lastName').type('Lã')
         cy.get('#email').type('luan.la@autoglass.com.br')
@@ -22,9 +25,15 @@ describe('Central de Atendimento ao Cliente TAT', function () {
         cy.get('#open-text-area').type(longText, { delay: 0 })
         cy.contains('button', 'Enviar').click()
         cy.get('.success > strong').should('be.visible')
+
+        cy.tick(THREE_SECONDS_IN_MS)
+
+        cy.get('.error > strong').should('not.be.visible')
+
     })
 
     it('exibe mensagem de erro ao submeter o formulário com um email com formatação inválida', function () {
+        cy.clock()
         cy.get('#firstName').type('Luãn')
         cy.get('#phone').type('27996419906')
         cy.get('input[type=radio][value=elogio]').click()
@@ -33,6 +42,9 @@ describe('Central de Atendimento ao Cliente TAT', function () {
         cy.get('#open-text-area').type('Teste de Sistema', { delay: 0 })
         cy.contains('button', 'Enviar').click()
         cy.get('.error > strong').should('be.visible')
+        cy.tick(THREE_SECONDS_IN_MS)
+        cy.get('.error > strong').should('not.be.visible')
+
     })
 
     it('Campo telefone vazio apos digitar letras', function () {
@@ -152,5 +164,39 @@ describe('Central de Atendimento ao Cliente TAT', function () {
         cy.contains('Talking About Testing').should('be.visible')
     })
 
+    it('exibe e esconde as mensagens de sucesso e erro usando o .invoke', function() {
+        cy.get('.success')
+          .should('not.be.visible')
+          .invoke('show')
+          .should('be.visible')
+          .and('contain', 'Mensagem enviada com sucesso.')
+          .invoke('hide')
+          .should('not.be.visible')
+        cy.get('.error')
+          .should('not.be.visible')
+          .invoke('show')
+          .should('be.visible')
+          .and('contain', 'Valide os campos obrigatórios!')
+          .invoke('hide')
+          .should('not.be.visible')
+      })
 
+      it('preenche a area de texto usando o comando invoke', function(){
+         const longText = Cypress._.repeat('Esse Texto Se Repete', 10)
+
+         cy.get('#open-text-area')
+           .invoke('val', longText)
+           .should('have.value', longText)
+      })
+
+      it.only('Faz Requisição HTTP', function(){
+        cy.request('https://cac-tat.s3.eu-central-1.amazonaws.com/index.html')
+          .should(function(response){
+            console.log(response)
+            const {status, statusText, body} = response
+            expect(status).to.equal(200)
+            expect(statusText).to.equal('OK')
+            expect(body).to.include('CAC TAT')
+          })
+      })
 })
